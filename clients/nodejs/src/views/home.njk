@@ -1,0 +1,23 @@
+{% extends "template.njk" %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-width-container ">
+    <main class="govuk-main-wrapper">
+
+      <h1 class="govuk-heading-l">An example service</h1>
+      <p class="govuk-body">
+        Login to access the service
+      </p>
+
+      {{ govukButton({
+        text: "Continue",
+        href: "/oauth/login"
+      }) }}
+
+    </div>
+  </main>
+</div>
+{% endblock %}
