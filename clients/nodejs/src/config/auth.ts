@@ -56,7 +56,7 @@ async function getResult(
     throw new Error("No access token received");
   }
 
-  const accessToken = JSON.stringify(decodeJwt(tokenSet.access_token), null, 2);
+  const accessToken = JSON.stringify((tokenSet.access_token), null, 2);
   const idToken = tokenSet.id_token
     ? JSON.stringify(decodeJwt(tokenSet.id_token), null, 2)
     : undefined;
