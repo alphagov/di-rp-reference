@@ -56,12 +56,12 @@ async function getResult(
     throw new Error("No access token received");
   }
 
-  const accessToken = JSON.stringify((tokenSet.access_token), null, 2);
+  const accessToken = JSON.stringify(tokenSet.access_token, null, 2);
   const idToken = tokenSet.id_token
     ? JSON.stringify(decodeJwt(tokenSet.id_token), null, 2)
     : undefined;
   const refreshToken = tokenSet.refresh_token
-    ? JSON.stringify(decodeJwt(tokenSet.refresh_token), null, 2)
+    ? JSON.stringify(tokenSet.refresh_token, null, 2)
     : undefined;
 
   // Use the access token to authenticate the call to userinfo
