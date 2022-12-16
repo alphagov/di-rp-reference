@@ -23,7 +23,8 @@ const SCOPES = [
 ];
 
 // Vector of trust
-const VTR = `["P2.Cl.Cm"]`;
+//const VTR = `["P2.Cl.Cm"]`;
+const VTR = `["Cl.Cm"]`;
 
 // Requested claims
 const CLAIMS = {
@@ -47,6 +48,12 @@ function getRedirectUri(req: Request) {
   return `${protocol}://${host}/oauth/callback`;
 }
 
+function getPostLogoutRedirectUri(req: Request) {
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+  const host = req.headers.host;
+  return `${protocol}://${host}/oauth/post-logout`;
+}
+
 async function getResult(
   ivPublicKey: KeyLike,
   client: Client,
@@ -57,11 +64,14 @@ async function getResult(
   }
 
   const accessToken = JSON.stringify(tokenSet.access_token, null, 2);
-  const idToken = tokenSet.id_token
+
+  const idToken = tokenSet.id_token;
+  const idTokenDecoded = tokenSet.id_token
     ? JSON.stringify(decodeJwt(tokenSet.id_token), null, 2)
     : undefined;
+
   const refreshToken = tokenSet.refresh_token
-    ? JSON.stringify(tokenSet.refresh_token, null, 2)
+    ? tokenSet.refresh_token
     : undefined;
 
   // Use the access token to authenticate the call to userinfo
@@ -98,6 +108,7 @@ async function getResult(
     accessToken,
     refreshToken,
     idToken,
+    idTokenDecoded,
     userinfo: JSON.stringify(userinfo, null, 2),
     coreIdentity,
   };
@@ -212,6 +223,32 @@ export async function auth(configuration: AuthMiddlewareConfiguration) {
 
       // Display the results.
       res.render("result.njk", result);
+    })
+  );
+
+  router.post(
+    "/oauth/logout",
+    urlencoded({extended:true}),
+    asyncHandler(async (req: Request, res: Response) => {
+      const idToken = req.body.token;
+
+      // Send the user back to One Login to terminate the session there
+      const endSessionUrl = client.endSessionUrl({
+        id_token_hint: idToken,
+        post_logout_redirect_uri: getPostLogoutRedirectUri(req)
+      })
+
+      res.render("logout.njk", {
+        endSessionUrl
+      });
+      //res.redirect(endSessionUrl)
+    })
+  );
+
+  router.get(
+    "/oauth/post-logout",
+    asyncHandler(async (req: Request, res: Response) => {
+      res.render("post-logout.njk");
     })
   );
 

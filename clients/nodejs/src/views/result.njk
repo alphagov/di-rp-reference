@@ -9,7 +9,13 @@
       <pre>{{accessToken}}</pre>
 
       <h1 class="govuk-heading-l">ID Token</h1>
-      <pre>{{idToken}}</pre>
+      <pre>{{idTokenDecoded}}</pre>
+      <form method="post" action="/oauth/logout">
+        <input type="hidden" name="token" value="{{idToken}}"/>
+        {{ govukButton({
+          text: "Logout"
+        }) }}
+      </form>
 
       {% if refreshToken %}
       <h1 class="govuk-heading-l">Refresh Token</h1>
