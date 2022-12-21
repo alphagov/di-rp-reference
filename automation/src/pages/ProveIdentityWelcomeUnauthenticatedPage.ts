@@ -3,7 +3,6 @@ import { PhotoIdPage } from "./PhotoIdPage";
 
 export class ProveIdentityWelcomeUnauthenticatedPage extends GovUkOneLoginPageBase {
   async continueToSignInOrCreateAccount(): Promise<PhotoIdPage> {
-    await this.clickOn("input[name='chooseWayPyi'][value='sign-in']");
     await this.clickOn("button[type='Submit']");
     return new PhotoIdPage(this.driver);
   }
