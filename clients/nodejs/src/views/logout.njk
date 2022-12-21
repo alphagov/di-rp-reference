@@ -5,22 +5,24 @@
   <div class="govuk-width-container ">
     <main class="govuk-main-wrapper">
 
-      <h1 class="govuk-heading-l" id="heading">Log Out</h1>
+      <h1 class="govuk-heading-l" id="heading">Sign Out</h1>
 
       <div id="info">
-        <p>
-          Attempting to log out automatically.
+        <p class="govuk-body">
+          Attempting to sign out automatically.
         </p>
-        <p>
+        <p class="govuk-body">
           If this doesn't to work after a few moments you can 
-          <a href="{{endSessionUrl}}">log out manually</a>.
+          <a href="{{endSessionUrl}}">sign out manually</a>.
         </p>
       </div>
 
-      {{ govukButton({
-        text: "Continue",
-        href: "/"
-      }) }}
+      <div id="info-complete" style="display:none">
+        {{ govukButton({
+          text: "Continue",
+          href: "/"
+        }) }}
+      </div>
 
     </div>
   </main>
@@ -34,7 +36,7 @@
 
       // This script replicates the Azure B2C logout process
 
-      document.getElementById("heading").innerText = "Logging Out";
+      document.getElementById("heading").innerText = "Signing Out";
       var iframe = document.createElement("iframe");
       iframe.setAttribute("style", "display:none;width:1px;height:1px");
       iframe.name = "logout";
@@ -42,7 +44,9 @@
   
       iframe.addEventListener('load', () => {
         console.log("logout iframe loaded");
-        document.getElementById("heading").innerText = "Logged out";
+        document.getElementById("heading").innerText = "You have signed out";
+        document.getElementById("info").style.display = "none";
+        document.getElementById("info-complete").style.display = "";
       });
 
       /*

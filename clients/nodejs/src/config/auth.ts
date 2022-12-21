@@ -23,8 +23,8 @@ const SCOPES = [
 ];
 
 // Vector of trust
-//const VTR = `["P2.Cl.Cm"]`;
-const VTR = `["Cl.Cm"]`;
+const VTR = `["P2.Cl.Cm"]`;
+//const VTR = `["Cl.Cm"]`;
 
 // Requested claims
 const CLAIMS = {
@@ -238,10 +238,10 @@ export async function auth(configuration: AuthMiddlewareConfiguration) {
         post_logout_redirect_uri: getPostLogoutRedirectUri(req)
       })
 
+      //res.redirect(endSessionUrl)
       res.render("logout.njk", {
         endSessionUrl
       });
-      //res.redirect(endSessionUrl)
     })
   );
 
