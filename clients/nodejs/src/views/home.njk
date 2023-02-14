@@ -16,7 +16,13 @@
         text: "Authenticate",
         href: "/oauth/login"
       }) }}
-
+      <!--
+      Query parameters will be added to the /authorize request. Eg.:
+      {{ govukButton({
+        text: "Reauthenticate",
+        href: "/oauth/login?max_age=0"
+      }) }}
+      -->
       {{ govukButton({
         text: "Identity Verification",
         href: "/oauth/iv"
