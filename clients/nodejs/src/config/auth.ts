@@ -5,6 +5,7 @@ import {
   generators,
   TokenSet,
   AuthorizationParameters,
+  BaseClient,
 } from "openid-client";
 import asyncHandler from "../async-handler";
 import { Claims, createClient, createIssuer, hash, readPrivateKey, readPublicKey } from "../govuk-one-login";
@@ -21,20 +22,6 @@ const SCOPES = [
   "phone", // Return the user's telephone number
   "offline_access" // Return a refresh token so the access token can be refreshed before it expires
 ];
-
-// Vector of trust
-const VTR = `["P2.Cl.Cm"]`;
-//const VTR = `["Cl.Cm"]`;
-
-// Requested claims
-const CLAIMS = {
-  userinfo: {
-    // Core identity
-    [Claims.CoreIdentity]: { essential: true },
-    // Address
-    //[Claims.Address]: { essential: true },
-  },
-};
 
 // Issuer that is must have issued identity claims.
 const ISSUER = "https://identity.integration.account.gov.uk/";
@@ -114,6 +101,55 @@ async function getResult(
   };
 }
 
+function buildAuthorizationUrl(
+  configuration: AuthMiddlewareConfiguration,
+  req:Request,
+  res: Response<any, Record<string, any>>,
+  client: BaseClient,
+  vtr: string,
+  claims?: { userinfo: any },
+  additionalParameters?: any
+  ): string {
+
+  const redirectUri = configuration.authorizeRedirectUri ||
+    configuration.redirectUri ||
+    getRedirectUri(req);
+
+  // Generate values that protect the flow from replay attacks.
+  const nonce = generators.nonce();
+  const state = generators.state();
+
+  // Store the nonce and state in a session cookie so it can be checked in callback
+  res.cookie(NONCE_COOKIE_NAME, nonce, {
+    httpOnly: true,
+  });
+
+  res.cookie(STATE_COOKIE_NAME, state, {
+    httpOnly: true,
+  });
+
+  const authorizationParameters: AuthorizationParameters = {
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: SCOPES.join(" "),
+    state: hash(state),
+    nonce: hash(nonce),
+    vtr: vtr,
+    ui_locales: "en-GB en",
+  };
+
+  if(typeof claims === "object"){
+    authorizationParameters.claims = JSON.stringify(claims);
+  }
+
+  if(typeof additionalParameters === "object") {
+    Object.assign(authorizationParameters, additionalParameters);
+  }
+
+  // Construct the url and redirect on to the authorization endpoint
+  return client.authorizationUrl(authorizationParameters);
+}
+
 export async function auth(configuration: AuthMiddlewareConfiguration) {
   // Load private key is required for signing token exchange
   const jwks = [readPrivateKey(configuration.privateKey).export({
@@ -129,49 +165,41 @@ export async function auth(configuration: AuthMiddlewareConfiguration) {
   const issuer = await createIssuer(configuration);
 
   // The client that requests the tokens.
-  const client = createClient(configuration, issuer, jwks);
+  const client:BaseClient = createClient(configuration, issuer, jwks);
 
   const router = Router();
 
   router.get("/oauth/login", (req: Request, res: Response) => {
 
+    // Vector of trust for authentication
+    const vtr = `["Cl.Cm"]`;
+
     // Calculate the redirect URL the should be returned to after completing the OAuth flow
-    const redirectUri =
-    configuration.authorizeRedirectUri ||
-    configuration.redirectUri ||
-    getRedirectUri(req);
+    const authorizationUrl = buildAuthorizationUrl(configuration, req, res, client, vtr, undefined, req.query);
 
-    // Generate values that protect the flow from replay attacks.
-    const nonce = generators.nonce();
-    const state = generators.state();
-    
-    // Store the nonce and state in a session cookie so it can be checked in callback
-    res.cookie(NONCE_COOKIE_NAME, nonce, {
-      httpOnly: true,
-    });
-    res.cookie(STATE_COOKIE_NAME, state, {
-      httpOnly: true,
-    });
+      // Redirect to the authorization server
+    res.redirect(authorizationUrl);
+  });
 
-    const authorizationParameters: AuthorizationParameters = {
-      redirect_uri: redirectUri,
-      response_type: "code",
-      scope: SCOPES.join(" "),
-      state: hash(state),
-      nonce: hash(nonce),
-      vtr: VTR,
-      ui_locales: "en-GB en"
+  router.get("/oauth/iv", (req: Request, res: Response) => {
+
+    // Vector of trust for medium level of confidence
+    const vtr = `["P2.Cl.Cm"]`;
+
+    // Requested claims
+    const claims = {
+      userinfo: {
+        // Core identity
+        [Claims.CoreIdentity]: { essential: true },
+        // Address
+        //[Claims.Address]: { essential: true },
+      },
     };
 
-    // Include claims that are being requested
-    if(CLAIMS) {
-      authorizationParameters.claims = JSON.stringify(CLAIMS);
-    }
-    
-    // Construct the url and redirect on to the authorization endpoint
-    const authorizationUrl = client.authorizationUrl(authorizationParameters);
+    // Calculate the redirect URL the should be returned to after completing the OAuth flow
+    const authorizationUrl = buildAuthorizationUrl(configuration, req, res, client, vtr, claims, req.query);
 
-    // Redirect to the authorization server
+      // Redirect to the authorization server
     res.redirect(authorizationUrl);
   });
 
