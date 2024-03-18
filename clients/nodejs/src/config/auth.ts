@@ -20,7 +20,7 @@ const SCOPES = [
   "openid", // Always included
   "email", // Return the user's email address (NB: this is the username rather than their preferred communication email address) 
   "phone", // Return the user's telephone number
-  "offline_access" // Return a refresh token so the access token can be refreshed before it expires
+  // "offline_access" // Return a refresh token so the access token can be refreshed before it expires
 ];
 
 // Issuer that is must have issued identity claims.
@@ -80,7 +80,7 @@ async function getResult(
 
     // Check the validity of the claim using the public key
     const { payload } = await jwtVerify(coreIdentityJWT!, ivPublicKey, {
-      issuer: ISSUER,
+      issuer: client.issuer.metadata.issuer,
     });
 
     // Check the Vector of Trust (vot) to ensure the expected level of confidence was achieved.
